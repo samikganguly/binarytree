@@ -1,0 +1,4 @@
+*.o
+*.so*
+binarytree
+binarytree-dbg

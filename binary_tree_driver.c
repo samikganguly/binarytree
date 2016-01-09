@@ -34,9 +34,9 @@ int main(void) {
 					fprintf(stdout,"\tkey = %d, value = %c\n", new_node->key, (char)(new_node->val));
 				break;
 			case 'd':
-				fprintf(stdout, "\tOrder of Display\n\t\ta)in-order\n\t\tb)pre-order\n\t\tc)post-order\n\t\td)back to previous menu\n\t\tEnter choise: ");	
+				fprintf(stdout, "\tOrder of Display\n\t\ta)depth-first(in-order)\n\t\tb)depth-first(pre-order)\n\t\tc)depth-first(post-order)\n\t\td)breadth-first\n\t\te)back to previous menu\n\t\tEnter choise: ");	
 				fscanf(stdin, " %c", &choise);
-				if(choise < 'd' || choise >= 'a') {
+				if(choise < 'e' && choise >= 'a') {
 					flat_tree = malloc(binary_tree_size(tree) * sizeof(struct node*));
 					if(!flat_tree) {
 						fprintf(stdout, "can't allocate memory for flattened tree\n");
@@ -51,6 +51,9 @@ int main(void) {
 							break;
 						case 'c':
 							binary_tree_flatten(tree, POST_ORDER, flat_tree);
+							break;
+						case 'd':
+							binary_tree_flatten(tree, BREADTH_FIRST, flat_tree);
 					}
 					fprintf(stdout,"\t");
 					for(size = 0; size < binary_tree_size(tree); size++) {

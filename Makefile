@@ -24,14 +24,14 @@ ${LIBS}:binary_tree.o
 binary_tree.o:binary_tree_c.h binary_tree_c.c
 	${CC} ${CFLAGS_O} binary_tree_c.c -o binary_tree.o
 debug:${EXEC_DBG}
-${EXEC_DBG}:${LIBS_DBG}
+${EXEC_DBG}:${LIBS_DBG} binary_tree_driver.c
 	${CC} ${CFLAGS_DBG} binary_tree_driver.c -o ${EXEC_DBG} -Wl,${CFLAGS_LD} ${LDFLAGS_DBG}
 ${LIBS_DBG}:binary_tree-dbg.o
 	${CC} ${CFLAGS_LIB} -Wl,${CFLAGS_LIB_LD_DBG} binary_tree-dbg.o -o ${LIBS_DBG}.1.0
 	ln -sf ${LIBS_DBG}.1.0 ${LIBS_DBG}.1
 	ln -sf ${LIBS_DBG}.1 ${LIBS_DBG}
 binary_tree-dbg.o:binary_tree_c.h binary_tree_c.c
-	${CC} ${CFLAGS_O} ${CFLAGS_DBG} binary_tree_c.c -o binary_tree.o
+	${CC} ${CFLAGS_O} ${CFLAGS_DBG} binary_tree_c.c -o binary_tree-dbg.o
 .PHONY:clean
 clean:
 	rm *.o

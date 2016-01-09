@@ -7,7 +7,7 @@
 #define MOD_OPR_INS 1
 #define MOD_OPR_DEL 0
 
-static int _travarse(struct node**, enum travarse_mode, struct node**, const unsigned char, const int, struct node**, int); 
+static int _travarse(struct node**, enum travarse_mode, struct node**, const unsigned char, const int, struct node**, int, int); 
 static int _modify(struct node**, struct node**, struct node*, const unsigned char);
 void init_node(struct node** new_node, const int key, const void* val) {
 	*new_node = malloc(sizeof(struct node));
@@ -31,7 +31,7 @@ void init_binary_tree(struct binary_tree** tree, const struct node* root) {
 }
 void destroy_binary_tree(struct binary_tree** tree) {
 	if(*tree) {
-		_travarse(&((*tree)->root), POST_ORDER, NULL, TRV_OPR_FREE, 0, NULL, 0);
+		_travarse(&((*tree)->root), POST_ORDER, NULL, TRV_OPR_FREE, 0, NULL, 0, (*tree)->size);
 		free(*tree);
 		*tree = NULL;
 	}
@@ -42,11 +42,11 @@ int binary_tree_size(const struct binary_tree* tree) {
 }
 struct node* binary_tree_search(const struct binary_tree* tree, const int key) {
 	auto struct node* srch_node = NULL;
-	if(tree) _travarse(&(tree->root), IN_ORDER, NULL, TRV_OPR_SRCH, key, &srch_node, 0);
+	if(tree) _travarse(&(tree->root), IN_ORDER, NULL, TRV_OPR_SRCH, key, &srch_node, 0, tree->size);
 	return srch_node;
 }
 void binary_tree_flatten(const struct binary_tree* tree, enum travarse_mode t_mode, struct node** container) {
-	if(tree) _travarse(&(tree->root), t_mode, container, TRV_OPR_FLT, 0, NULL, 0);
+	if(tree) _travarse(&(tree->root), t_mode, container, TRV_OPR_FLT, 0, NULL, 0, tree->size);
 }
 void binary_tree_insert(struct binary_tree* tree, const struct node* new_node) {
 	if(tree) tree->size += _modify(NULL, &(tree->root), new_node, MOD_OPR_INS);
@@ -114,34 +114,35 @@ static int _modify(struct node** parent_node, struct node** curr_node, struct no
 				}
 				free(*curr_node);
 			}
+			count--;
 		}
-		count--;
 	}
 	return count;
 }
-static int _travarse(struct node** curr_node, enum travarse_mode t_mode, struct node** ctr, const unsigned char operation, const int key, struct node** srch_node, int flat_tree_index) {
-	int ctr_index = flat_tree_index;
+static int _travarse(struct node** curr_node, enum travarse_mode t_mode, struct node** ctr, const unsigned char operation, const int key, struct node** srch_node, int flat_tree_index, int tree_size) {
+	int ctr_index = flat_tree_index, visited = 0;
 	if(*curr_node) {
 		if(operation == TRV_OPR_SRCH && key == (*curr_node)->key) {
 			*srch_node = *curr_node;
 			return ctr_index;
 		}
 		switch(t_mode) {
+			case DEPTH_FIRST:
 			case PRE_ORDER:
 				if(operation == TRV_OPR_FLT && ctr) { ctr[ctr_index] = *curr_node; ctr_index++; }
 				if((*curr_node)->l_child) {
-					ctr_index = _travarse(&((*curr_node)->l_child), t_mode, ctr, operation, key, srch_node, ctr_index);
+					ctr_index = _travarse(&((*curr_node)->l_child), t_mode, ctr, operation, key, srch_node, ctr_index, tree_size);
 				}
 				if((*curr_node)->r_child) {
-					ctr_index = _travarse(&((*curr_node)->r_child), t_mode, ctr, operation, key, srch_node, ctr_index);
+					ctr_index = _travarse(&((*curr_node)->r_child), t_mode, ctr, operation, key, srch_node, ctr_index, tree_size);
 				}
 				break;
 			case POST_ORDER:
 				if((*curr_node)->l_child) {
-					ctr_index = _travarse(&((*curr_node)->l_child), t_mode, ctr, operation, key, srch_node, ctr_index);
+					ctr_index = _travarse(&((*curr_node)->l_child), t_mode, ctr, operation, key, srch_node, ctr_index, tree_size);
 				}
 				if((*curr_node)->r_child) {
-					ctr_index = _travarse(&((*curr_node)->r_child), t_mode, ctr, operation, key, srch_node, ctr_index);
+					ctr_index = _travarse(&((*curr_node)->r_child), t_mode, ctr, operation, key, srch_node, ctr_index, tree_size);
 				}
 				if(operation == TRV_OPR_FLT && ctr) { ctr[ctr_index] = *curr_node; ctr_index++; }
 				else if(operation == TRV_OPR_FREE) {
@@ -150,16 +151,24 @@ static int _travarse(struct node** curr_node, enum travarse_mode t_mode, struct 
 				break;
 			case IN_ORDER:
 				if((*curr_node)->l_child) {
-					ctr_index = _travarse(&((*curr_node)->l_child), t_mode, ctr, operation, key, srch_node, ctr_index);
+					ctr_index = _travarse(&((*curr_node)->l_child), t_mode, ctr, operation, key, srch_node, ctr_index, tree_size);
 				}
 				if(operation == TRV_OPR_FLT && ctr) { ctr[ctr_index] = *curr_node; ctr_index++; }
 				if((*curr_node)->r_child) {
-					ctr_index = _travarse(&((*curr_node)->r_child), t_mode, ctr, operation, key, srch_node, ctr_index);
+					ctr_index = _travarse(&((*curr_node)->r_child), t_mode, ctr, operation, key, srch_node, ctr_index, tree_size);
 				}
 				break;
-			case DEPTH_FIRST:
-				break;
 			case BREADTH_FIRST:
+				if(operation == TRV_OPR_FLT && ctr) {
+					ctr[visited] = *curr_node; ctr_index++;
+					while(ctr_index < tree_size) {
+						if((ctr[visited])->l_child)
+							{ ctr[ctr_index] = (ctr[visited])->l_child; ctr_index++; }
+						if((ctr[visited])->r_child)
+							{ ctr[ctr_index] = (ctr[visited])->r_child; ctr_index++; }
+						visited++;
+					}
+				}
 				break;
 		}
 	}
